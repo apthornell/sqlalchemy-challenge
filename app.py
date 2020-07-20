@@ -1,4 +1,4 @@
-#%%
+
 import numpy as np 
 import sqlalchemy 
 from sqlalchemy.ext.automap import automap_base
@@ -38,8 +38,8 @@ def home():
            f"/api/v1.0/stations --- lists all weather observation stations<br/>"
            f"/api/v1.0/precipitation --- latest year of precipitation values<br/>"
            f"/api/v1.0/tobs --- latest year of temperature data<br/>"
-           f"/api/v1.0/temp/<startdate> ---gives temperature data from a given start date<br/>"
-           f"/api/v1.0/temp/<startdate>/<enddate> --- gives the temperature data for a given range of dates<br/>"
+           f"/api/v1.0/temp/startdate ---gives temperature data from a given start date<br/>"
+           f"/api/v1.0/temp/startdate/enddate --- gives the temperature data for a given range of dates<br/>"
            f"date format is (YYYY-MM-DD)<br/>"
            f"dates available: 2010-01-01 to 2017-08-23")
 
@@ -65,5 +65,15 @@ def tobs():
 @app.route("/api/v1.0/temp/<startdate>")
 @app.route("/api/v1.0/temp/<startdate>/<enddate>")
 def tempDates(startdate=None, enddate=None):
-    TMin = session.query(Measurement.tobs, func.min(Measurement.tobs)).filter_by(Measurement.date > startdate) 
-    TMax = session.query(Measurement.tobs, func.max(measurement.tobs)).all()
+    if enddate != "":
+        tempStats = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs))\
+            .filter(Measurement.date.between(yearBefore, latestDate)).all()
+        tempData = list(np.ravel(tempStats))
+        return jsonify(tempData)
+    else:
+        tempStats = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs))\
+            .filter(Measurement.date.between(startdate, enddate)).all()
+        tempData = list(np.ravel(tempStats))
+        return jsonify(tempData)
+if __name__== "__main__":
+    app.run(debug = False)
