@@ -3,7 +3,7 @@ import numpy as np
 import sqlalchemy 
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, func 
+from sqlalchemy import create_engine, func, inspect 
 from flask import Flask, jsonify
 import datetime as dt 
 
@@ -15,6 +15,8 @@ Base.prepare(engine, reflect = True)
 Measurement = Base.classes.measurement
 Station = Base.classes.station 
 session = Session(engine) 
+inspector = inspect(engine)
+inspector.get_table_names()
 app = Flask(__name__)
 
 latestDate = (session.query(Measurement.date)
@@ -46,20 +48,20 @@ def home():
 
 @app.route("/api/v1.0/stations")
 def stations():
-    results = session.query(Station.name).all()
-    stationNames = list(np.ravel(results))
+    results1 = session.query(Station.station, Station.name).all()
+    stationNames = list(np.ravel(results1))
     return jsonify(stationNames)
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    results = session.query(Measurement.date, Measurement.prcp).filter_by(Measurement.date > yearBefore).all()
-    precipValues = {date: prcp for date, prcp in results}
+    results2 = session.query(Measurement.date, Measurement.prcp).filter_by(Measurement.date > yearBefore).all()
+    precipValues = {date: prcp for date, prcp in results2}
     return jsonify(precipValues)
 
 @app.route("/api/v1.0/tobs")
 def tobs():
-    results = session.query(Measurement.tobs).filter_by(Station.name == "USC00519281").filter_by(Measurement.date > latestYear).all()
-    tobsData = list(np.ravel(results))
+    results3 = session.query(Measurement.tobs).filter_by(Station.name == "USC00519281").filter_by(Measurement.date > latestYear).all()
+    tobsData = list(np.ravel(results3))
     return jsonify(tobsData)
 
 @app.route("/api/v1.0/temp/<startdate>")
@@ -76,4 +78,4 @@ def tempDates(startdate=None, enddate=None):
         tempData = list(np.ravel(tempStats))
         return jsonify(tempData)
 if __name__== "__main__":
-    app.run(debug = False)
+    app.run(debug = True)
